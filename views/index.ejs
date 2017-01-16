@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Welcome to Chat</title>
+	<style>
+		body {
+			background-color: linen;
+		}
+		.chat_box{
+			background-color: white;
+			height: 200px;
+			width:200px;
+			padding: 5px;
+			margin: 30px;
+			display:inline-block;
+			border:solid 3px black;
+		}
+		.alert{
+			opacity: 0;
+			color:red;
+		}
+		#text_entry {
+			background-color: lightgrey;
+		}
+
+
+	</style>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<script >
+		$('document').ready(function(){
+				console.log('JQuery ready');
+				var socket= io.connect();
+				console.log(socket.socketid);
+				// var for users object
+				var users ={}
+				var name = prompt('What name are you using?');
+				console.log(name);
+				$('#local_user').text('Welcome ' + name);
+				socket.emit('new_user', name);	
+				 document.getElementById("text_entry").focus();
+				socket.on('add_user', function(data){
+					console.log(data);
+						var myDiv = document.createElement("div");
+						$(myDiv).css('opacity', 0);
+						myDiv.id = data.id;
+						myDiv.name = data.user;
+						myDiv.className = 'chat_box';
+						myDiv.innerHTML = data.user + ' says:';
+						document.getElementById('bodyId').appendChild(myDiv); 
+						$(myDiv).animate({
+							opacity: 1
+						}, 2000);
+
+						$('.alert').text(data.user + " has joined the chatroom.");
+						$('.alert').animate({
+									opacity: 1
+								}, 2000, function(){
+									$('.alert').animate({
+										opacity: 0
+									}, 3000);
+						});
+
+						// console.log(x, data[x]);
+
+						// var myDiv = document.createElement("div"); 
+						// myDiv.id = data[x];
+						// myDiv.className = 'chat_box';
+						// myDiv.innerHTML = x + ' says:';
+						// document.getElementById('bodyId').appendChild(myDiv); 
+
+
+
+					
+				});
+				socket.on('user_list', function(data){
+					// console.log(data);
+					for(x in data){
+						console.log('userlist', x, data[x]);
+						// users[]
+						users[x] = data[x];
+						var myDiv = document.createElement("div");
+						// var myH3 = document.createElement('h3');
+						// myH3.id = x;
+						// console.log('my h3 is is', x);
+						// myH3.text('test test test');
+						// document.getElementById.appendChild(myH3); 
+						myDiv.id = data[x];
+						myDiv.className = 'chat_box';
+						myDiv.innerHTML = x + ' says:';
+						document.getElementById('bodyId').appendChild(myDiv);           
+
+
+					}
+				});
+				socket.on('delete_user', function(data){
+					console.log(data);
+					delete users[data.name];
+					var delDiv = document.getElementById(data.id);
+					// console.log('delDiv is', delDiv);
+					$(delDiv).animate({
+						opacity: 0
+					}, 3000)
+					
+					// // $('.alert').css('opacity: 1;')
+					// var deletedName = user
+					// $('.alert').css('opacity', 1);
+
+					$('.alert').text(data.name + " has left the chatroom.");
+					$('.alert').animate({
+						opacity: 1
+					}, 2000, function(){
+						$('.alert').animate({
+							opacity: 0
+						}, 3000);
+					});
+				});
+				socket.on('update_user_chat_box', function(data){
+					console.log('data from server update chat box', data);
+					document.getElementById(data.id).innerHTML =data.text;
+					var red_text =document.getElementById(data.id);
+					console.log(red_text);
+					$(red_text).css('color', 'red');
+					setTimeout(function(){$(red_text).css('color', 'black');}, 3000)
+					// $(red_text).animate({
+					// 	color:'green'
+					// }, 1000)
+					// myElement.innerHTML(data.text);
+					// console.log(myElement);
+				})
+				$('#text_entry').keyup(function(e){
+	                console.log(e);
+	                console.log(users);
+
+	                var myText = name + ' says:     <br><br> ' + $('#text_entry').val();
+	                console.log('my text is',myText);
+
+	                socket.emit('text_submitted', myText);
+	                // console.log('keyup');
+	                if (e.keyCode == '13'){
+	                    console.log('13 return entered');
+	                    $('#text_entry').val('');
+	                }
+	            })
+
+
+		});
+
+
+	</script>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body id ='bodyId'>
+	<h2 class = 'alert'>This is where losers will be shown</h3>
+	<h1 id ='local_user'>INdex.ejs</h1>
+	<h4>Enter text here:</h4>
+	<textarea name="" id="text_entry" cols="30" rows="5" ></textarea>
+	
+</body>
+</html>
